@@ -102,6 +102,15 @@ namespace GestorVehiculos
             return esValido;
         }
 
+        //Método auxiliar para comprobar si existe una matrícula
+        private bool MatriculaExiste(string matricula, int? idVehiculo = null)
+        {
+            using (var db = new ParkingEntities())
+            {
+                return db.Vehiculos.Any(vehiculo => vehiculo.Matricula == matricula && vehiculo.Id != idVehiculo);
+            }
+        }
+
         //LimpiarCampos() --> Este método limpia los cuadros de texto y el filtro
         private void LimpiarCampos()
         {
@@ -122,13 +131,22 @@ namespace GestorVehiculos
         {
             if (Validar()) //Validamos los datos
             {
+                //Obtenemos la matrícula en mayúsculas y sin espacios
+                string matricula = txtMatricula.Text.Trim().ToUpper();
+
+                if (MatriculaExiste(matricula)) //Comprobamos si ya existe esa matrícula
+                {
+                    MessageBox.Show("Ya existe un vehículo con esa matrícula.");
+                    return;
+                }
+
                 try
                 {
                     using (var db = new ParkingEntities())
                     {
                         var vehiculo = new Vehiculos
                         {
-                            Matricula = txtMatricula.Text.Trim().ToUpper(),
+                            Matricula = matricula,
                             Marca = txtMarca.Text.Trim(),
                             Modelo = txtModelo.Text.Trim(),
                             TipoVehiculoId = (int)cmbTipo.SelectedValue
@@ -156,6 +174,13 @@ namespace GestorVehiculos
                 if (Validar())
                 {
                     var id = (int)dgvVehiculos.CurrentRow.Cells["Id"].Value; //Obtenemos el Id del vehículo seleccionado
+                    string matricula = txtMatricula.Text.Trim().ToUpper();
+
+                    if (MatriculaExiste(matricula, id))
+                    {
+                        MessageBox.Show("Ya existe otro vehículo con esa matrícula.");
+                        return;
+                    }
 
                     try
                     {
@@ -164,7 +189,7 @@ namespace GestorVehiculos
                             var vehiculo = db.Vehiculos.Find(id); //Buscamos el vehículo
                             if (vehiculo != null)
                             {
-                                vehiculo.Matricula = txtMatricula.Text.Trim().ToUpper();
+                                vehiculo.Matricula = matricula;
                                 vehiculo.Marca = txtMarca.Text.Trim();
                                 vehiculo.Modelo = txtModelo.Text.Trim();
                                 vehiculo.TipoVehiculoId = (int)cmbTipo.SelectedValue;

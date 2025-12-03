@@ -66,6 +66,15 @@ namespace GestorVehiculos
             return esValido;
         }
 
+        //NombreTipoExiste() --> Método auxiliar para comprobar si existe un nombre de tipo
+        private bool NombreTipoExiste(string nombre, int? idTipo = null)
+        {
+            using (var db = new ParkingEntities())
+            {
+                return db.TiposVehiculo.Any(tipo => tipo.Nombre == nombre && tipo.Id != idTipo);
+            }
+        }
+
         //LimpiarCampos() --> Este método limpia los cuadros de texto
         private void LimpiarCampos()
         {
@@ -78,13 +87,21 @@ namespace GestorVehiculos
         {
             if (Validar()) //Validamos los datos
             {
+                //Comprobamos si ya existe un tipo con ese nombre
+                string nombre = txtNombre.Text.Trim();
+                if (NombreTipoExiste(nombre))
+                {
+                    MessageBox.Show("Ya existe un tipo de vehículo con ese nombre.");
+                    return;
+                }
+
                 try
                 {
                     using (var db = new ParkingEntities())
                     {
                         var tipo = new TiposVehiculo
                         {
-                            Nombre = txtNombre.Text.Trim(), //Guardamos el nombre
+                            Nombre = nombre, //Guardamos el nombre
                             TarifaHora = decimal.Parse(txtTarifa.Text.Trim()) //Guardamos la tarifa
                         };
 
@@ -110,8 +127,14 @@ namespace GestorVehiculos
             {
                 if (Validar())
                 {
-                    //var id = ((TiposVehiculo)dgvTipos.CurrentRow.DataBoundItem).Id;
                     var id = (int)dgvTipos.CurrentRow.Cells["Id"].Value; //Obtenemos el Id del tipo
+                    //Comprobamos si ya existe otro tipo con ese nombre
+                    string nombre = txtNombre.Text.Trim();
+                    if (NombreTipoExiste(nombre, id))
+                    {
+                        MessageBox.Show("Ya existe otro tipo de vehículo con ese nombre.");
+                        return;
+                    }
 
                     try
                     {
@@ -120,7 +143,7 @@ namespace GestorVehiculos
                             var tipo = db.TiposVehiculo.Find(id); //Buscamos el tipo en la base de datos
                             if (tipo != null)
                             {
-                                tipo.Nombre = txtNombre.Text.Trim(); //Actualizamos el nombre
+                                tipo.Nombre = nombre; //Actualizamos el nombre
                                 tipo.TarifaHora = decimal.Parse(txtTarifa.Text.Trim()); //Actualizamos la tarifa
                                 db.SaveChanges(); //Guardamos los cambios
 
@@ -151,7 +174,6 @@ namespace GestorVehiculos
         {
             if (dgvTipos.CurrentRow != null) //Si hay una fila seleccionada
             {
-                //var id = ((TiposVehiculo)dgvTipos.CurrentRow.DataBoundItem).Id;
                 var id = (int)dgvTipos.CurrentRow.Cells["Id"].Value; //Obtenemos el Id del tipo
 
                 //Confirmamos la eliminación
